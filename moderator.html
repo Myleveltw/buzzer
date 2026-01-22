@@ -118,16 +118,10 @@
 
   // Bild / Modus aus Settings
   settingsRef.on("value", snap => {
-    const s = snap.val();
-    const img = document.getElementById("showImage");
+settingsRef.on("value", snap => {
+  console.log("SETTINGS:", snap.val());
+});
 
-    if (s && s.mode === "image" && s.image) {
-      img.src = s.image;
-      img.style.display = "block";
-    } else {
-      img.style.display = "none";
-    }
-  });
 
   function resetBuzzer() {
     buzzerRef.remove();
