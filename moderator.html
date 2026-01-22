@@ -96,7 +96,7 @@
 
 <script>
   const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -118,10 +118,16 @@
 
   // Bild / Modus aus Settings
   settingsRef.on("value", snap => {
-settingsRef.on("value", snap => {
-  console.log("SETTINGS:", snap.val());
-});
+    const s = snap.val();
+    const img = document.getElementById("showImage");
 
+    if (s && s.mode === "image" && s.image) {
+      img.src = s.image;
+      img.style.display = "block";
+    } else {
+      img.style.display = "none";
+    }
+  });
 
   function resetBuzzer() {
     buzzerRef.remove();
