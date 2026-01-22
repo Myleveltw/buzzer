@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Moderator</title>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: white;
+      text-align: center;
+      padding-top: 60px;
+    }
+    #winner {
+      font-size: 70px;
+      margin: 40px 0;
+    }
+    button {
+      font-size: 30px;
+      padding: 20px 40px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🎬 MODERATOR</h1>
+
+<div id="winner">—</div>
+
+<button onclick="reset()">🔄 RESET</button>
+
+<script>
+  const firebaseConfig = {
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const buzzerRef = db.ref("buzzer");
+
+  buzzerRef.on("value", snap => {
+    if (snap.exists()) {
+      const d = snap.val();
+      document.getElementById("winner").innerText =
+        d.name + " (Platz " + d.seat + ")";
+    } else {
+      document.getElementById("winner").innerText = "—";
+    }
+  });
+
+  function reset() {
+    buzzerRef.set(null);
+  }
+</script>
+
+</body>
+</html>
