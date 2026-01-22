@@ -36,17 +36,9 @@
       border-radius: 12px;
       border: none;
       cursor: pointer;
-    }
-
-    .on {
       background: linear-gradient(135deg, #00ffcc, #0066ff);
       color: black;
       font-weight: bold;
-    }
-
-    .off {
-      background: #333;
-      color: white;
     }
 
     input {
@@ -72,13 +64,18 @@
 
 <div class="box">
   <h2>Bild (URL)</h2>
-  <input id="imageUrl" placeholder="https://...">
-  <button onclick="setImage()">Bild setzten</button>
+  <input id="imageUrl" placeholder="https://...jpg">
+  <button onclick="setImage()">Bild setzen</button>
+</div>
+
+<div class="box">
+  <h2>Punkt vergeben</h2>
+  <button onclick="givePoint()">🏆 +1 Punkt Animation</button>
 </div>
 
 <script>
   const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -93,6 +90,17 @@
     const url = document.getElementById("imageUrl").value;
     if (!url) return;
     settingsRef.update({ image: url });
+  }
+
+  function givePoint() {
+    db.ref("pointAnimation").set({
+      show: true,
+      time: Date.now()
+    });
+
+    setTimeout(() => {
+      db.ref("pointAnimation").remove();
+    }, 1000);
   }
 </script>
 
