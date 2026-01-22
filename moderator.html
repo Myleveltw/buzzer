@@ -2,62 +2,47 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Moderator</title>
+  <title>Moderator – Buzzer</title>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
     body {
-      font-family: sans-serif;
-      background: #111;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #111, #000);
       color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 60px;
+      margin-bottom: 20px;
+      letter-spacing: 3px;
+    }
+
+    .winner {
+      margin-top: 40px;
+      padding: 40px 60px;
+      border-radius: 25px;
+      background: linear-gradient(135deg, #00ffcc, #0066ff);
+      color: black;
+      box-shadow: 0 0 60px rgba(0,255,200,0.6);
       text-align: center;
-      padding-top: 60px;
+      display: none;
+      animation: pop 0.4s ease-out;
     }
-    #winner {
-      font-size: 70px;
-      margin: 40px 0;
+
+    .winner-name {
+      font-size: 72px;
+      font-weight: bold;
     }
-    button {
-      font-size: 30px;
-      padding: 20px 40px;
-      cursor: pointer;
-    }
-  </style>
-</head>
 
-<body>
-
-<h1>Buzzer:</h1>
-
-<div id="winner">—</div>
-
-<button onclick="reset()">🔄 RESET</button>
-
-<script>
-  const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-  const buzzerRef = db.ref("buzzer");
-
-  buzzerRef.on("value", snap => {
-    if (snap.exists()) {
-      const d = snap.val();
-      document.getElementById("winner").innerText =
-        d.name + " (Platz " + d.seat + ")";
-    } else {
-      document.getElementById("winner").innerText = "—";
-    }
-  });
-
-  function reset() {
-    buzzerRef.set(null);
-  }
-</script>
-
-</body>
-</html>
+    .winner-seat {
+      font-si
