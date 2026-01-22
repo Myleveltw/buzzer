@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Buzzer</title>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body style="font-family:sans-serif;text-align:center">
+
+<h1>Buzzer</h1>
+
+<input id="name" placeholder="Dein Name"><br><br>
+<input id="seat" placeholder="Platz (z. B. 1)"><br><br>
+
+<button onclick="buzz()" style="font-size:30px;padding:20px">
+  🔴 BUZZER
+</button>
+
+<hr>
+
+<h2>Erster Buzzer:</h2>
+<h1 id="winner">—</h1>
+
+<button onclick="reset()">Reset (Moderator)</button>
+
+<script>
+  const firebaseConfig = {
+    databaseURL: "https://DEIN-PROJEKT.firebaseio.com"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const buzzerRef = db.ref("buzzer");
+
+  function buzz() {
+    const name = document.getElementById("name").value;
+    const seat = document.getElementById("seat").value;
+    if (!name || !seat) return alert("Name & Platz eingeben!");
+
+    buzzerRef.transaction(current => {
+      if (current === null) {
+        return {
+          name: name,
+          seat: seat,
+          time: Date.now()
+        };
+      }
+      return;
+    });
+  }
+
+  buzzerRef.on("value", snap => {
+    if (snap.exists()) {
+      const data = snap.val();
+      document.getElementById("winner").innerText =
+        data.name + " (Platz " + data.seat + ")";
+    } else {
+      document.getElementById("winner").innerText = "—";
+    }
+  });
+
+  function reset() {
+    buzzerRef.set(null);
+  }
+</script>
+
+</body>
+</html>
