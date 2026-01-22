@@ -3,30 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <title>Buzzer</title>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- STYLE MUSS HIER REIN -->
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at top, #1a1a1a, #000);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 38px;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+    }
+
+    input {
+      width: 260px;
+      padding: 14px;
+      margin: 8px 0;
+      font-size: 18px;
+      border-radius: 10px;
+      border: none;
+      text-align: center;
+    }
+
+    button {
+      margin-top: 30px;
+      width: 280px;
+      height: 120px;
+      border-radius: 60px;
+      border: none;
+      font-size: 28px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #ff004c, #ff6a00);
+      color: white;
+      box-shadow: 0 0 30px rgba(255,0,80,0.6);
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 50px rgba(255,0,80,0.9);
+    }
+  </style>
 </head>
-<body style="font-family:sans-serif;text-align:center">
 
-<h1>Buzzer</h1>
+<body>
 
-<input id="name" placeholder="Dein Name"><br><br>
-<input id="seat" placeholder="Platz (z. B. 1)"><br><br>
+<h1>🔴 BUZZER</h1>
 
-<button onclick="buzz()" style="font-size:30px;padding:20px">
-  🔴 BUZZER
-</button>
+<input id="name" placeholder="Name">
+<input id="seat" placeholder="Platz">
 
-<hr>
-
-<h2>Erster Buzzer:</h2>
-<h1 id="winner">—</h1>
-
-<button onclick="reset()"></button>
+<button onclick="buzz()">BUZZ!</button>
 
 <script>
   const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -36,32 +80,13 @@
   function buzz() {
     const name = document.getElementById("name").value;
     const seat = document.getElementById("seat").value;
-    if (!name || !seat) return alert("Name & Platz eingeben!");
+    if (!name || !seat) return;
 
     buzzerRef.transaction(current => {
       if (current === null) {
-        return {
-          name: name,
-          seat: seat,
-          time: Date.now()
-        };
+        return { name, seat, time: Date.now() };
       }
-      return;
     });
-  }
-
-  buzzerRef.on("value", snap => {
-    if (snap.exists()) {
-      const data = snap.val();
-      document.getElementById("winner").innerText =
-        data.name + " (Platz " + data.seat + ")";
-    } else {
-      document.getElementById("winner").innerText = "—";
-    }
-  });
-
-  function reset() {
-    buzzerRef.set(null);
   }
 </script>
 
