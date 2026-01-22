@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Moderator – Buzzer Show</title>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -58,8 +57,18 @@
       margin-top: 10px;
     }
 
+    #pointAnim {
+      position: absolute;
+      bottom: 10%;
+      font-size: 48px;
+      font-weight: bold;
+      color: gold;
+      display: none;
+      animation: pop 0.6s ease-out;
+    }
+
     @keyframes pop {
-      from { transform: scale(0.7); opacity: 0; }
+      from { transform: scale(0.6); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
 
@@ -72,11 +81,6 @@
       background: linear-gradient(135deg, #ff004c, #ff8800);
       color: white;
       cursor: pointer;
-      box-shadow: 0 0 40px rgba(255,80,0,0.6);
-    }
-
-    button:active {
-      transform: scale(0.95);
     }
   </style>
 </head>
@@ -92,11 +96,13 @@
   <div class="winner-seat" id="winnerSeat"></div>
 </div>
 
+<div id="pointAnim"></div>
+
 <button onclick="resetBuzzer()">RESET</button>
 
 <script>
   const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -104,10 +110,10 @@
   const db = firebase.database();
   const buzzerRef = db.ref("buzzer");
   const settingsRef = db.ref("settings");
+  const pointRef = db.ref("pointAnimation");
 
-  let hasBuzzed = false; // 🔴 entscheidet, ob Bild erlaubt ist
+  let hasBuzzed = false;
 
-  // SETTINGS → Bild anzeigen (nur wenn NOCH NICHT gebuzzert)
   settingsRef.on("value", snap => {
     const s = snap.val();
     const img = document.getElementById("showImage");
@@ -120,19 +126,32 @@
     }
   });
 
-  // BUZZ → Bild sofort weg + Gewinner anzeigen
   buzzerRef.on("value", snap => {
     const data = snap.val();
     if (!data) return;
 
     hasBuzzed = true;
-
     document.getElementById("showImage").style.display = "none";
 
     document.getElementById("winnerBox").style.display = "block";
     document.getElementById("winnerName").textContent = data.name;
     document.getElementById("winnerSeat").textContent =
       "Platz " + data.seat + " war zuerst";
+  });
+
+  pointRef.on("value", snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    const anim = document.getElementById("pointAnim");
+    const name = document.getElementById("winnerName").textContent;
+
+    anim.textContent = `🎉 ${name} bekommt +1 Punkt!`;
+    anim.style.display = "block";
+
+    setTimeout(() => {
+      anim.style.display = "none";
+    }, 1500);
   });
 
   function resetBuzzer() {
