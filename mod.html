@@ -8,68 +8,74 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
-body {
+body{
   margin:0;
   background:black;
   color:white;
   font-family:Segoe UI,sans-serif;
   height:100vh;
-  overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:center;
+  overflow:hidden;
 }
 
-#quizImage {
+/* Bild */
+#quizImage{
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
   object-fit:contain;
   display:none;
+  z-index:1;
 }
 
-#winner {
+/* Gewinner */
+#winner{
+  z-index:2;
   text-align:center;
   display:none;
-  z-index:2;
 }
-#winner h1 { font-size:80px; margin:0; }
+#winner h1{
+  font-size:90px;
+  margin:0;
+}
 
-#rankingBox {
+/* Ranking */
+#rankingBox{
   position:absolute;
   top:10%;
   background:#000;
   padding:30px 50px;
   border-radius:25px;
   display:none;
-  box-shadow:0 0 40px rgba(0,255,200,0.6);
   z-index:3;
 }
-#rankingBox h2 {
+#rankingBox h2{
   font-size:40px;
   margin-top:0;
   text-align:center;
 }
-#rankingList div {
+#rankingList div{
   font-size:28px;
   margin:8px 0;
 }
 
-#pointAnim {
+/* Punkt Animation */
+#pointAnim{
   position:absolute;
-  bottom:12%;
+  bottom:10%;
   font-size:48px;
-  font-weight:bold;
   color:gold;
   display:none;
-  animation:pop .6s ease-out;
   z-index:4;
+  animation:pop .6s ease-out;
 }
 
-@keyframes pop {
-  from {transform:scale(.6);opacity:0}
-  to {transform:scale(1);opacity:1}
+@keyframes pop{
+  from{transform:scale(.6);opacity:0}
+  to{transform:scale(1);opacity:1}
 }
 </style>
 </head>
@@ -91,60 +97,61 @@ body {
 
 <script>
 firebase.initializeApp({
-  databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
+  databaseURL:"https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
 });
-const db = firebase.database();
+const db=firebase.database();
 
-const quizImage = document.getElementById("quizImage");
-const winnerDiv = document.getElementById("winner");
-const winnerName = document.getElementById("winnerName");
-const rankingBox = document.getElementById("rankingBox");
-const rankingList = document.getElementById("rankingList");
-const pointAnim = document.getElementById("pointAnim");
+const quizImage=document.getElementById("quizImage");
+const winnerDiv=document.getElementById("winner");
+const winnerName=document.getElementById("winnerName");
+const rankingBox=document.getElementById("rankingBox");
+const rankingList=document.getElementById("rankingList");
+const pointAnim=document.getElementById("pointAnim");
 
-// Modus
-db.ref("settings/mode").on("value", s=>{
-  quizImage.style.display = s.val()==="image" ? "block" : "none";
-});
-
-// Bild
-db.ref("settings/imageUrl").on("value", s=>{
-  if(s.val()) quizImage.src = s.val();
-});
-
-// Buzz
-db.ref("buzz").on("value", s=>{
-  if(!s.val()) {
+/* 🔴 BUZZ – DAS IST DAS WICHTIGSTE */
+db.ref("buzz").on("value",s=>{
+  if(!s.val()){
     winnerDiv.style.display="none";
     return;
   }
-  winnerName.textContent = s.val().name;
+  winnerName.textContent=s.val().name;
   winnerDiv.style.display="block";
-  quizImage.style.display="none";
+  quizImage.style.display="none"; // Bild weg beim Buzz
 });
 
-// Ranking anzeigen
-db.ref("settings/showRanking").on("value", s=>{
-  rankingBox.style.display = s.val() ? "block":"none";
+/* 🎮 MODUS */
+db.ref("settings/mode").on("value",s=>{
+  if(s.val()==="image"){
+    quizImage.style.display="block";
+  }
 });
 
-// Ranking Daten
-db.ref("players").on("value", s=>{
-  if(!s.val()) return;
-  const arr = Object.values(s.val()).map(p=>({
+/* 🖼️ BILD */
+db.ref("settings/imageUrl").on("value",s=>{
+  if(s.val()) quizImage.src=s.val();
+});
+
+/* 📊 RANKING */
+db.ref("settings/showRanking").on("value",s=>{
+  rankingBox.style.display=s.val()?"block":"none";
+});
+
+db.ref("players").on("value",s=>{
+  if(!s.val())return;
+  const arr=Object.values(s.val()).map(p=>({
     name:p.name||"Spieler",
     points:p.points||0
   })).sort((a,b)=>b.points-a.points);
 
-  rankingList.innerHTML = arr.map((p,i)=>
-    `<div>${i+1}. ${p.name} – ${p.points} Punkte</div>`
+  rankingList.innerHTML=arr.map((p,i)=>
+    `<div>${i+1}. ${p.name} – ${p.points}</div>`
   ).join("");
 });
 
-// Punkt Animation
-db.ref("pointAnimation").on("value", s=>{
-  if(!s.val()) return;
-  pointAnim.textContent = `🎉 ${winnerName.textContent} +1 Punkt`;
+/* 🎉 PUNKT ANIMATION */
+db.ref("pointAnimation").on("value",s=>{
+  if(!s.val())return;
+  pointAnim.textContent=`🎉 ${winnerName.textContent} +1 Punkt`;
   pointAnim.style.display="block";
   setTimeout(()=>pointAnim.style.display="none",1500);
 });
