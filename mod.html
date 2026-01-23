@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>MOD – TEST</title>
+<title>MOD DEBUG</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -11,22 +11,21 @@
 body{
   margin:0;
   background:black;
-  color:white;
-  font-family:Arial, sans-serif;
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  color:#00ffcc;
+  font-family:monospace;
+  padding:20px;
 }
-#winner{
-  font-size:80px;
+pre{
+  white-space:pre-wrap;
+  word-break:break-word;
 }
 </style>
 </head>
 
 <body>
 
-<div id="winner">Warte auf Buzz…</div>
+<h1>🔥 Firebase Live Debug</h1>
+<pre id="output">Lade...</pre>
 
 <script>
 firebase.initializeApp({
@@ -34,14 +33,11 @@ firebase.initializeApp({
 });
 
 const db = firebase.database();
-const winner = document.getElementById("winner");
+const out = document.getElementById("output");
 
-db.ref("buzz").on("value", snap => {
-  if (!snap.val()) {
-    winner.textContent = "Warte auf Buzz…";
-    return;
-  }
-  winner.textContent = snap.val().name;
+// GANZE DATABASE ANZEIGEN
+db.ref("/").on("value", snap => {
+  out.textContent = JSON.stringify(snap.val(), null, 2);
 });
 </script>
 
