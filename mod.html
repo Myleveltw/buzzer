@@ -96,7 +96,7 @@
 
 <script>
   const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
   };
 
   firebase.initializeApp(firebaseConfig);
@@ -105,12 +105,14 @@
   const buzzerRef = db.ref("buzzer");
   const settingsRef = db.ref("settings");
 
-  // SETTINGS → Bild anzeigen
+  let hasBuzzed = false; // 🔴 entscheidet, ob Bild erlaubt ist
+
+  // SETTINGS → Bild anzeigen (nur wenn NOCH NICHT gebuzzert)
   settingsRef.on("value", snap => {
     const s = snap.val();
     const img = document.getElementById("showImage");
 
-    if (s && s.mode === "image" && s.image) {
+    if (!hasBuzzed && s && s.mode === "image" && s.image) {
       img.src = s.image;
       img.style.display = "block";
     } else {
@@ -118,10 +120,12 @@
     }
   });
 
-  // BUZZ → Bild weg + Gewinner anzeigen
+  // BUZZ → Bild sofort weg + Gewinner anzeigen
   buzzerRef.on("value", snap => {
     const data = snap.val();
     if (!data) return;
+
+    hasBuzzed = true;
 
     document.getElementById("showImage").style.display = "none";
 
@@ -132,6 +136,7 @@
   });
 
   function resetBuzzer() {
+    hasBuzzed = false;
     buzzerRef.remove();
     document.getElementById("winnerBox").style.display = "none";
   }
