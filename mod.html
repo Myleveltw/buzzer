@@ -1,81 +1,111 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Moderator</title>
+  <meta charset="UTF-8">
+  <title>Moderator – Buzzer</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<style>
-body{
-margin:0;background:#000;color:white;font-family:Arial;
-display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh
-}
-#img{max-height:60vh;display:none;margin-bottom:20px}
-#winner{font-size:60px;display:none;margin-top:20px}
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #111, #000);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    h1 {
+      font-size: 60px;
+      margin-bottom: 20px;
+      letter-spacing: 3px;
+    }
+
+    .winner {
+      margin-top: 40px;
+      padding: 40px 60px;
+      border-radius: 25px;
+      background: linear-gradient(135deg, #00ffcc, #0066ff);
+      color: black;
+      box-shadow: 0 0 60px rgba(0,255,200,0.6);
+      text-align: center;
+      display: none;
+      animation: pop 0.4s ease-out;
+    }
+
+    .winner-name {
+      font-size: 72px;
+      font-weight: bold;
+    }
+
+    .winner-seat {
+      font-size: 32px;
+      margin-top: 10px;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    button {
+      margin-top: 50px;
+      padding: 20px 60px;
+      font-size: 28px;
+      border-radius: 40px;
+      border: none;
+      background: linear-gradient(135deg, #ff004c, #ff8800);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 0 40px rgba(255,80,0,0.6);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+  </style>
 </head>
 
 <body>
 
-<img id="img">
-<h1 id="status">Bereit</h1>
-<div id="winner"></div>
+<h1>🎤 BUZZER</h1>
 
-<audio id="audio"></audio>
+<div class="winner" id="winnerBox">
+  <div class="winner-name" id="winnerName"></div>
+  <div class="winner-seat" id="winnerSeat"></div>
+</div>
+
+<button onclick="resetBuzzer()">RESET</button>
 
 <script>
-const firebaseConfig={
-databaseURL:"https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
-};
-firebase.initializeApp(firebaseConfig);
+  const firebaseConfig = {
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
+  };
 
-const db=firebase.database();
-const settings=db.ref("settings");
-const buzzer=db.ref("buzzer");
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const buzzerRef = db.ref("buzzer");
 
-const img=document.getElementById("img");
-const audio=document.getElementById("audio");
-const status=document.getElementById("status");
-const winner=document.getElementById("winner");
+  buzzerRef.on("value", snap => {
+    const data = snap.val();
+    if (data) {
+      document.getElementById("winnerBox").style.display = "block";
+      document.getElementById("winnerName").textContent = data.name;
+      document.getElementById("winnerSeat").textContent =
+        "Platz " + data.seat + " war zuerst";
+    }
+  });
 
-settings.on("value",snap=>{
-const s=snap.val();
-if(!s)return;
-
-img.style.display="none";
-audio.pause(); audio.currentTime=0;
-
-if(s.mode==="buzzer"){
-status.textContent="🔴 Buzzer bereit";
-}
-
-if(s.mode==="image" && s.image){
-img.src=s.image;
-img.style.display="block";
-status.textContent="🖼️ Bild aktiv";
-}
-
-if(s.mode==="audio" && s.audio){
-audio.src=s.audio;
-audio.play();
-status.textContent="🔊 Audio läuft";
-}
-
-winner.style.display="none";
-});
-
-buzzer.on("value",snap=>{
-const b=snap.val();
-if(!b)return;
-
-audio.pause();
-img.style.display="none";
-
-winner.style.display="block";
-winner.textContent=b.name+" war zuerst!";
-});
+  function resetBuzzer() {
+    buzzerRef.remove();
+    document.getElementById("winnerBox").style.display = "none";
+  }
 </script>
 
 </body>
