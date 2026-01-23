@@ -1,163 +1,164 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Moderator</title>
+  <meta charset="UTF-8">
+  <title>Moderator – Buzzer Show</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<style>
-body{
-  margin:0;
-  background:black;
-  color:white;
-  font-family:Segoe UI,sans-serif;
-  height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-}
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #111, #000);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-/* Bild */
-#quizImage{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  display:none;
-  z-index:1;
-}
+    h1 {
+      font-size: 60px;
+      letter-spacing: 4px;
+      margin-bottom: 20px;
+    }
 
-/* Gewinner */
-#winner{
-  z-index:2;
-  text-align:center;
-  display:none;
-}
-#winner h1{
-  font-size:90px;
-  margin:0;
-}
+    #showImage {
+      max-width: 90%;
+      max-height: 45vh;
+      margin-bottom: 30px;
+      border-radius: 25px;
+      box-shadow: 0 0 50px rgba(0,0,0,0.8);
+      display: none;
+    }
 
-/* Ranking */
-#rankingBox{
-  position:absolute;
-  top:10%;
-  background:#000;
-  padding:30px 50px;
-  border-radius:25px;
-  display:none;
-  z-index:3;
-}
-#rankingBox h2{
-  font-size:40px;
-  margin-top:0;
-  text-align:center;
-}
-#rankingList div{
-  font-size:28px;
-  margin:8px 0;
-}
+    .winner {
+      padding: 40px 70px;
+      border-radius: 30px;
+      background: linear-gradient(135deg, #00ffcc, #0066ff);
+      color: black;
+      box-shadow: 0 0 60px rgba(0,255,200,0.6);
+      text-align: center;
+      display: none;
+      animation: pop 0.4s ease-out;
+    }
 
-/* Punkt Animation */
-#pointAnim{
-  position:absolute;
-  bottom:10%;
-  font-size:48px;
-  color:gold;
-  display:none;
-  z-index:4;
-  animation:pop .6s ease-out;
-}
+    .winner-name {
+      font-size: 72px;
+      font-weight: bold;
+    }
 
-@keyframes pop{
-  from{transform:scale(.6);opacity:0}
-  to{transform:scale(1);opacity:1}
-}
-</style>
+    .winner-seat {
+      font-size: 32px;
+      margin-top: 10px;
+    }
+
+    #pointAnim {
+      position: absolute;
+      bottom: 10%;
+      font-size: 48px;
+      font-weight: bold;
+      color: gold;
+      display: none;
+      animation: pop 0.6s ease-out;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.6); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    button {
+      margin-top: 40px;
+      padding: 18px 60px;
+      font-size: 26px;
+      border-radius: 40px;
+      border: none;
+      background: linear-gradient(135deg, #ff004c, #ff8800);
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
 
-<img id="quizImage">
+<h1>🎤 BUZZER</h1>
 
-<div id="winner">
-  <h1 id="winnerName">---</h1>
-</div>
+<img id="showImage">
 
-<div id="rankingBox">
-  <h2>📊 Punktestand</h2>
-  <div id="rankingList"></div>
+<div class="winner" id="winnerBox">
+  <div class="winner-name" id="winnerName"></div>
+  <div class="winner-seat" id="winnerSeat"></div>
 </div>
 
 <div id="pointAnim"></div>
 
+<button onclick="resetBuzzer()">RESET</button>
+
 <script>
-firebase.initializeApp({
-  databaseURL:"https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
-});
-const db=firebase.database();
+  const firebaseConfig = {
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
+  };
 
-const quizImage=document.getElementById("quizImage");
-const winnerDiv=document.getElementById("winner");
-const winnerName=document.getElementById("winnerName");
-const rankingBox=document.getElementById("rankingBox");
-const rankingList=document.getElementById("rankingList");
-const pointAnim=document.getElementById("pointAnim");
+  firebase.initializeApp(firebaseConfig);
 
-/* 🔴 BUZZ – HIER WAR DER FEHLER */
-db.ref("buzzer").on("value", snap => {
-  const data = snap.val();
-  if(!data){
-    winnerDiv.style.display="none";
-    return;
+  const db = firebase.database();
+  const buzzerRef = db.ref("buzzer");
+  const settingsRef = db.ref("settings");
+  const pointRef = db.ref("pointAnimation");
+
+  let hasBuzzed = false;
+
+  settingsRef.on("value", snap => {
+    const s = snap.val();
+    const img = document.getElementById("showImage");
+
+    if (!hasBuzzed && s && s.mode === "image" && s.image) {
+      img.src = s.image;
+      img.style.display = "block";
+    } else {
+      img.style.display = "none";
+    }
+  });
+
+  buzzerRef.on("value", snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    hasBuzzed = true;
+    document.getElementById("showImage").style.display = "none";
+
+    document.getElementById("winnerBox").style.display = "block";
+    document.getElementById("winnerName").textContent = data.name;
+    document.getElementById("winnerSeat").textContent =
+      "Platz " + data.seat + " war zuerst";
+  });
+
+  pointRef.on("value", snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    const anim = document.getElementById("pointAnim");
+    const name = document.getElementById("winnerName").textContent;
+
+    anim.textContent = `🎉 ${name} bekommt +1 Punkt!`;
+    anim.style.display = "block";
+
+    setTimeout(() => {
+      anim.style.display = "none";
+    }, 1500);
+  });
+
+  function resetBuzzer() {
+    hasBuzzed = false;
+    buzzerRef.remove();
+    document.getElementById("winnerBox").style.display = "none";
   }
-
-  winnerName.textContent = data.name;
-  winnerDiv.style.display="block";
-  quizImage.style.display="none"; // Bild weg beim Buzz
-});
-
-/* 🎮 MODUS */
-db.ref("settings/mode").on("value", snap => {
-  if(snap.val()==="image"){
-    quizImage.style.display="block";
-  }
-});
-
-/* 🖼️ BILD */
-db.ref("settings/imageUrl").on("value", snap => {
-  if(snap.val()) quizImage.src = snap.val();
-});
-
-/* 📊 RANKING */
-db.ref("settings/showRanking").on("value", snap => {
-  rankingBox.style.display = snap.val() ? "block" : "none";
-});
-
-db.ref("players").on("value", snap => {
-  if(!snap.val()) return;
-
-  const arr = Object.values(snap.val()).map(p => ({
-    name:p.name || "Spieler",
-    points:p.points || 0
-  })).sort((a,b)=>b.points-a.points);
-
-  rankingList.innerHTML = arr.map((p,i)=>
-    `<div>${i+1}. ${p.name} – ${p.points} Punkte</div>`
-  ).join("");
-});
-
-/* 🎉 PUNKT ANIMATION */
-db.ref("pointAnimation").on("value", snap => {
-  if(!snap.val()) return;
-  pointAnim.textContent = `🎉 ${winnerName.textContent} +1 Punkt`;
-  pointAnim.style.display="block";
-  setTimeout(()=>pointAnim.style.display="none",1500);
-});
 </script>
 
 </body>
