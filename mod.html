@@ -2,163 +2,159 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Moderator – Buzzer Show</title>
+  <title>Moderator</title>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: radial-gradient(circle at center, #111, #000);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
+      margin:0;
+      background:#0a0a0a;
+      color:white;
+      font-family:Segoe UI, sans-serif;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      height:100vh;
+      overflow:hidden;
     }
 
-    h1 {
-      font-size: 60px;
-      letter-spacing: 4px;
-      margin-bottom: 20px;
+    #winner {
+      text-align:center;
+      display:none;
     }
 
-    #showImage {
-      max-width: 90%;
-      max-height: 45vh;
-      margin-bottom: 30px;
-      border-radius: 25px;
-      box-shadow: 0 0 50px rgba(0,0,0,0.8);
-      display: none;
+    #winner h1 {
+      font-size:80px;
+      margin:0;
     }
 
-    .winner {
-      padding: 40px 70px;
-      border-radius: 30px;
-      background: linear-gradient(135deg, #00ffcc, #0066ff);
-      color: black;
-      box-shadow: 0 0 60px rgba(0,255,200,0.6);
-      text-align: center;
-      display: none;
-      animation: pop 0.4s ease-out;
+    #winner p {
+      font-size:30px;
+      opacity:0.8;
     }
 
-    .winner-name {
-      font-size: 72px;
-      font-weight: bold;
+    /* Ranking */
+    #rankingBox {
+      position:absolute;
+      top:10%;
+      background:#000;
+      padding:30px 50px;
+      border-radius:25px;
+      display:none;
+      box-shadow:0 0 40px rgba(0,255,200,0.6);
     }
 
-    .winner-seat {
-      font-size: 32px;
-      margin-top: 10px;
+    #rankingBox h2 {
+      margin-top:0;
+      font-size:40px;
+      text-align:center;
     }
 
+    #rankingList div {
+      font-size:28px;
+      margin:10px 0;
+    }
+
+    /* Punkt Animation */
     #pointAnim {
-      position: absolute;
-      bottom: 10%;
-      font-size: 48px;
-      font-weight: bold;
-      color: gold;
-      display: none;
+      position:absolute;
+      bottom:12%;
+      font-size:48px;
+      font-weight:bold;
+      color:gold;
+      display:none;
       animation: pop 0.6s ease-out;
     }
 
     @keyframes pop {
-      from { transform: scale(0.6); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    button {
-      margin-top: 40px;
-      padding: 18px 60px;
-      font-size: 26px;
-      border-radius: 40px;
-      border: none;
-      background: linear-gradient(135deg, #ff004c, #ff8800);
-      color: white;
-      cursor: pointer;
+      from { transform:scale(0.6); opacity:0; }
+      to { transform:scale(1); opacity:1; }
     }
   </style>
 </head>
 
 <body>
 
-<h1>🎤 BUZZER</h1>
-
-<img id="showImage">
-
-<div class="winner" id="winnerBox">
-  <div class="winner-name" id="winnerName"></div>
-  <div class="winner-seat" id="winnerSeat"></div>
+<!-- Gewinner -->
+<div id="winner">
+  <h1 id="winnerName">---</h1>
+  <p>hat gebuzzert!</p>
 </div>
 
+<!-- Punktestand -->
+<div id="rankingBox">
+  <h2>📊 Punktestand</h2>
+  <div id="rankingList"></div>
+</div>
+
+<!-- Punkt Animation -->
 <div id="pointAnim"></div>
 
-<button onclick="resetBuzzer()">RESET</button>
-
 <script>
-  const firebaseConfig = {
+  // 🔧 Firebase Init
+  firebase.initializeApp({
     databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
-  };
-
-  firebase.initializeApp(firebaseConfig);
+  });
 
   const db = firebase.database();
-  const buzzerRef = db.ref("buzzer");
-  const settingsRef = db.ref("settings");
-  const pointRef = db.ref("pointAnimation");
 
-  let hasBuzzed = false;
+  const winnerDiv = document.getElementById("winner");
+  const winnerName = document.getElementById("winnerName");
+  const rankingBox = document.getElementById("rankingBox");
+  const rankingList = document.getElementById("rankingList");
+  const pointAnim = document.getElementById("pointAnim");
 
-  settingsRef.on("value", snap => {
-    const s = snap.val();
-    const img = document.getElementById("showImage");
-
-    if (!hasBuzzed && s && s.mode === "image" && s.image) {
-      img.src = s.image;
-      img.style.display = "block";
-    } else {
-      img.style.display = "none";
+  // 🟥 Gewinner anzeigen
+  db.ref("buzz").on("value", snap => {
+    const data = snap.val();
+    if (!data) {
+      winnerDiv.style.display = "none";
+      return;
     }
+
+    winnerName.textContent = data.name;
+    winnerDiv.style.display = "block";
   });
 
-  buzzerRef.on("value", snap => {
-    const data = snap.val();
-    if (!data) return;
-
-    hasBuzzed = true;
-    document.getElementById("showImage").style.display = "none";
-
-    document.getElementById("winnerBox").style.display = "block";
-    document.getElementById("winnerName").textContent = data.name;
-    document.getElementById("winnerSeat").textContent =
-      "Platz " + data.seat + " war zuerst";
+  // 📊 Ranking ein / aus
+  db.ref("settings/showRanking").on("value", snap => {
+    rankingBox.style.display = snap.val() ? "block" : "none";
   });
 
-  pointRef.on("value", snap => {
-    const data = snap.val();
-    if (!data) return;
+  // 📊 Ranking Daten
+  db.ref("players").on("value", snap => {
+    const players = snap.val();
+    if (!players) return;
 
-    const anim = document.getElementById("pointAnim");
-    const name = document.getElementById("winnerName").textContent;
+    const arr = Object.values(players).map(p => ({
+      name: p.name || "Unbekannt",
+      points: p.points || 0
+    }));
 
-    anim.textContent = `🎉 ${name} bekommt +1 Punkt!`;
-    anim.style.display = "block";
+    arr.sort((a,b) => b.points - a.points);
+
+    rankingList.innerHTML = arr.map((p,i) =>
+      `<div>${i+1}. ${p.name} – ${p.points} Punkte</div>`
+    ).join("");
+  });
+
+  // 🎉 Punkt Animation
+  db.ref("pointAnimation").on("value", snap => {
+    if (!snap.val()) return;
+
+    const name = winnerName.textContent;
+    if (!name || name === "---") return;
+
+    pointAnim.textContent = `🎉 ${name} bekommt +1 Punkt!`;
+    pointAnim.style.display = "block";
 
     setTimeout(() => {
-      anim.style.display = "none";
+      pointAnim.style.display = "none";
     }, 1500);
   });
-
-  function resetBuzzer() {
-    hasBuzzed = false;
-    buzzerRef.remove();
-    document.getElementById("winnerBox").style.display = "none";
-  }
 </script>
 
 </body>
