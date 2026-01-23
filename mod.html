@@ -1,194 +1,121 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Moderator – Buzzer Show</title>
+<meta charset="UTF-8">
+<title>MOD ANSICHT</title>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body {
+  margin: 0;
+  background: #0f172a;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
 
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: radial-gradient(circle at center, #111, #000);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      overflow: hidden;
-    }
+h1 {
+  margin-top: 20px;
+  font-size: 42px;
+}
 
-    h1 {
-      font-size: 60px;
-      letter-spacing: 4px;
-      margin-bottom: 20px;
-    }
+#unlockBtn {
+  margin: 20px;
+  padding: 16px 40px;
+  font-size: 22px;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #00ffcc, #0066ff);
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    #unlockBtn {
-      margin-bottom: 20px;
-      padding: 14px 40px;
-      font-size: 20px;
-      border-radius: 30px;
-      border: none;
-      background: linear-gradient(135deg, #00ffcc, #0066ff);
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-    }
+#imageBox img {
+  max-width: 90%;
+  max-height: 60vh;
+  border-radius: 20px;
+  margin-top: 20px;
+}
 
-    #showImage {
-      max-width: 90%;
-      max-height: 45vh;
-      margin-bottom: 30px;
-      border-radius: 25px;
-      box-shadow: 0 0 50px rgba(0,0,0,0.8);
-      display: none;
-    }
-
-    .winner {
-      padding: 40px 70px;
-      border-radius: 30px;
-      background: linear-gradient(135deg, #00ffcc, #0066ff);
-      color: black;
-      box-shadow: 0 0 60px rgba(0,255,200,0.6);
-      text-align: center;
-      display: none;
-    }
-
-    .winner-name {
-      font-size: 72px;
-      font-weight: bold;
-    }
-
-    .winner-seat {
-      font-size: 32px;
-      margin-top: 10px;
-    }
-
-    button {
-      margin-top: 40px;
-      padding: 18px 60px;
-      font-size: 26px;
-      border-radius: 40px;
-      border: none;
-      background: linear-gradient(135deg, #ff004c, #ff8800);
-      color: white;
-      cursor: pointer;
-    }
-  </style>
+#buzzer {
+  margin-top: 30px;
+  font-size: 32px;
+  font-weight: bold;
+}
+</style>
 </head>
 
 <body>
 
-<h1>🎤 BUZZER</h1>
-<button id="unlockBtn" onclick="unlockAudio()">🔊 Audio freigeben</button>
+<h1>MOD</h1>
 
-<img id="showImage">
-<audio id="showAudio"></audio>
+<button id="unlockBtn">🔊 Audio freigeben</button>
 
-<div class="winner" id="winnerBox">
-  <div class="winner-name" id="winnerName"></div>
-  <div class="winner-seat" id="winnerSeat"></div>
-</div>
+<div id="imageBox"></div>
 
-<button onclick="resetBuzzer()">RESET</button>
+<div id="buzzer"></div>
+
+<audio id="showAudio" preload="auto"></audio>
 
 <script>
-  const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-
-  const db = firebase.database();
-  const buzzerRef = db.ref("buzzer");
-  const settingsRef = db.ref("settings");
-
-  let hasBuzzed = false;
-  let audioUnlocked = false;
-
-  function unlockAudio() {
-    const audio = document.getElementById("showAudio");
-    audio.muted = true;
-    audio.play().then(() => {
-      audio.pause();
-      audio.currentTime = 0;
-      audio.muted = false;
-      audioUnlocked = true;
-      document.getElementById("unlockBtn").style.display = "none";
-    });
-  }
-
-  // SETTINGS → Modus steuern
-  settingsRef.on("value", snap => {
-    const s = snap.val();
-    const img = document.getElementById("showImage");
-    const audio = document.getElementById("showAudio");
-
-    // Alles zurücksetzen
-    img.style.display = "none";
-    audio.pause();
-    audio.currentTime = 0;
-
-    if (!s || hasBuzzed) return;
-
-    // 🖼️ BILD-MODUS
-    if (s.mode === "image" && s.image) {
-      img.src = s.image;
-      img.style.display = "block";
-    }
-
-    // 🎵 AUDIO-MODUS
-    if (s.mode === "audio" && s.audio && audioUnlocked) {
-      audio.src = s.audio;
-      audio.play();
-    }
-  });
-
-  // 🔴 BUZZ
-  buzzerRef.on("value", snap => {
-    const data = snap.val();
-    if (!data) return;
-
-    hasBuzzed = true;
-
-    const audio = document.getElementById("showAudio");
-    audio.pause();
-    audio.currentTime = 0;
-
-    document.getElementById("showImage").style.display = "none";
-
-    document.getElementById("winnerBox").style.display = "block";
-    document.getElementById("winnerName").textContent = data.name;
-    document.getElementById("winnerSeat").textContent =
-      "Platz " + data.seat + " war zuerst";
-  });
-
-  function resetBuzzer() {
-    hasBuzzed = false;
-    buzzerRef.remove();
-    document.getElementById("winnerBox").style.display = "none";
-  }
-</script>
-  <script>
 const audio = document.getElementById("showAudio");
 const unlockBtn = document.getElementById("unlockBtn");
+const imageBox = document.getElementById("imageBox");
 
-unlockBtn.addEventListener("click", () => {
-  audio.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
-  audio.play().then(() => {
+let audioUnlocked = false;
+
+/* AUDIO FREIGEBEN */
+unlockBtn.onclick = async () => {
+  try {
+    audio.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3/";
+    await audio.play();
     audio.pause();
     audio.currentTime = 0;
+    audioUnlocked = true;
     unlockBtn.style.display = "none";
-    console.log("✅ Audio freigeschaltet");
-  }).catch(err => {
-    alert("Audio blockiert ❌ Tippe NOCHMAL");
-    console.error(err);
-  });
-});
+  } catch {
+    alert("Nochmal tippen");
+  }
+};
+
+/* AUDIO ABSPIELEN */
+function playAudio(url) {
+  if (!audioUnlocked) return;
+  audio.pause();
+  audio.currentTime = 0;
+  audio.src = url;
+  audio.load();
+  audio.play();
+}
+
+/* AUDIO STOP */
+function stopAudio() {
+  audio.pause();
+  audio.currentTime = 0;
+}
+
+/* BILD ZEIGEN */
+function showImage(url) {
+  imageBox.innerHTML = `<img src="${url}">`;
+}
+
+/* BILD AUS */
+function hideImage() {
+  imageBox.innerHTML = "";
+}
+
+/* === TEST BUTTONS (kannst du später löschen) === */
+setTimeout(() => {
+  showImage("https://picsum.photos/800/400");
+}, 2000);
+
+setTimeout(() => {
+  playAudio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3");
+}, 4000);
+
+setTimeout(() => {
+  hideImage();
+  stopAudio();
+}, 10000);
 </script>
 
 </body>
