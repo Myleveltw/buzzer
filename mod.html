@@ -173,6 +173,23 @@
     document.getElementById("winnerBox").style.display = "none";
   }
 </script>
+  <script>
+const audio = document.getElementById("showAudio");
+const unlockBtn = document.getElementById("unlockBtn");
+
+unlockBtn.addEventListener("click", () => {
+  audio.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+  audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
+    unlockBtn.style.display = "none";
+    console.log("✅ Audio freigeschaltet");
+  }).catch(err => {
+    alert("Audio blockiert ❌ Tippe NOCHMAL");
+    console.error(err);
+  });
+});
+</script>
 
 </body>
 </html>
