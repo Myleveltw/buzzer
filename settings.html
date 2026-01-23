@@ -68,12 +68,19 @@
   <h2>Modus</h2>
   <button onclick="setMode('buzzer')">🔴 Nur Buzzer</button>
   <button onclick="setMode('image')">🖼️ Buzzer + Bild</button>
+  <button onclick="setMode('audio')">🎵 Audio-Modus</button>
 </div>
 
 <div class="box">
   <h2>Bild (URL)</h2>
   <input id="imageUrl" placeholder="https://...">
   <button onclick="setImage()">Bild setzen</button>
+</div>
+
+  <div class="box">
+  <h2>Audio (URL)</h2>
+  <input id="audioUrl" placeholder="https://...mp3">
+  <button onclick="setAudio()">Audio abspielen</button>
 </div>
 
 <script>
@@ -94,6 +101,12 @@
     if (!url) return;
     settingsRef.update({ image: url });
   }
+
+  function setAudio() {
+  const url = document.getElementById("audioUrl").value;
+  if (!url) return;
+  settingsRef.update({ audio: url });
+}
 </script>
 
 </body>
