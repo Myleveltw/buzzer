@@ -1,50 +1,62 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Settings</title>
+<meta charset="UTF-8">
+<title>Settings</title>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <style>
-    body {
-      background:#111;
-      color:white;
-      font-family:Segoe UI,sans-serif;
-      padding:20px;
-    }
-    h1 { text-align:center; }
-    .box {
-      background:#1c1c1c;
-      padding:15px;
-      border-radius:15px;
-      margin-bottom:20px;
-    }
-    button {
-      width:100%;
-      padding:12px;
-      margin-top:10px;
-      border:none;
-      border-radius:12px;
-      font-size:16px;
-      font-weight:bold;
-      background:linear-gradient(135deg,#00ffcc,#0066ff);
-      cursor:pointer;
-    }
-    input {
-      width:100%;
-      padding:10px;
-      margin-top:8px;
-      border-radius:10px;
-      border:none;
-    }
-  </style>
+<style>
+body {
+  background:#111;
+  color:white;
+  font-family:Segoe UI,sans-serif;
+  padding:20px;
+}
+h1 { text-align:center; }
+.box {
+  background:#1c1c1c;
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:20px;
+}
+button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+  font-weight:bold;
+  background:linear-gradient(135deg,#00ffcc,#0066ff);
+  cursor:pointer;
+}
+input {
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border-radius:10px;
+  border:none;
+}
+</style>
 </head>
 
 <body>
 
 <h1>🎛️ SETTINGS</h1>
+
+<div class="box">
+  <h2>🎮 Modus</h2>
+  <button onclick="setMode('buzzer')">🔴 Nur Buzzer</button>
+  <button onclick="setMode('image')">🖼️ Buzzer + Bild</button>
+</div>
+
+<div class="box">
+  <h2>🖼️ Bild URL</h2>
+  <input id="imageUrl" placeholder="Bild URL einfügen">
+  <button onclick="setImage()">Bild setzen</button>
+</div>
 
 <div class="box">
   <h2>🏆 Punkt vergeben</h2>
@@ -53,48 +65,58 @@
 </div>
 
 <div class="box">
-  <h2>✏️ Punkte manuell setzen</h2>
+  <h2>✏️ Punkte manuell</h2>
   <input id="seatEdit" placeholder="Platznummer">
   <input id="pointsEdit" placeholder="Neue Punkte">
   <button onclick="setPoints()">Punkte setzen</button>
 </div>
 
 <div class="box">
-  <h2>📊 Anzeige</h2>
+  <h2>📊 Punktestand</h2>
   <button onclick="showRanking()">Punktestand anzeigen</button>
   <button onclick="hideRanking()">Punktestand ausblenden</button>
 </div>
 
 <script>
-  firebase.initializeApp({
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
-  });
+firebase.initializeApp({
+  databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
+});
 
-  const db = firebase.database();
+const db = firebase.database();
 
-  function addPoint() {
-    const seat = document.getElementById("seat").value;
-    if(!seat) return;
+function setMode(mode) {
+  db.ref("settings/mode").set(mode);
+}
 
-    const ref = db.ref("players/seat_" + seat + "/points");
-    ref.transaction(p => (p || 0) + 1);
-  }
+function setImage() {
+  const url = document.getElementById("imageUrl").value;
+  if(url) db.ref("settings/imageUrl").set(url);
+}
 
-  function setPoints() {
-    const seat = document.getElementById("seatEdit").value;
-    const points = parseInt(document.getElementById("pointsEdit").value);
-    if(!seat || isNaN(points)) return;
+function addPoint() {
+  const seat = document.getElementById("seat").value;
+  if(!seat) return;
+  db.ref("players/seat_" + seat + "/points")
+    .transaction(p => (p || 0) + 1);
 
-    db.ref("players/seat_" + seat + "/points").set(points);
-  }
+  db.ref("pointAnimation").set({time:Date.now()});
+  setTimeout(()=>db.ref("pointAnimation").remove(),1000);
+}
 
-  function showRanking() {
-    db.ref("settings/showRanking").set(true);
-  }
+function setPoints() {
+  const seat = document.getElementById("seatEdit").value;
+  const points = parseInt(document.getElementById("pointsEdit").value);
+  if(!seat || isNaN(points)) return;
+  db.ref("players/seat_" + seat + "/points").set(points);
+}
 
-  function hideRanking() {
-    db.ref("settings/showRanking").set(false);
-  }
+function showRanking() {
+  db.ref("settings/showRanking").set(true);
+}
+
+function hideRanking() {
+  db.ref("settings/showRanking").set(false);
+}
 </script>
 
 </body>
