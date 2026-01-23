@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Moderator – Buzzer</title>
+  <title>Moderator – Buzzer Show</title>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -16,21 +16,30 @@
       color: white;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       height: 100vh;
+      overflow: hidden;
     }
 
     h1 {
       font-size: 60px;
+      letter-spacing: 4px;
       margin-bottom: 20px;
-      letter-spacing: 3px;
+    }
+
+    #showImage {
+      max-width: 90%;
+      max-height: 45vh;
+      margin-bottom: 30px;
+      border-radius: 25px;
+      box-shadow: 0 0 50px rgba(0,0,0,0.8);
+      display: none;
     }
 
     .winner {
-      margin-top: 40px;
-      padding: 40px 60px;
-      border-radius: 25px;
+      padding: 40px 70px;
+      border-radius: 30px;
       background: linear-gradient(135deg, #00ffcc, #0066ff);
       color: black;
       box-shadow: 0 0 60px rgba(0,255,200,0.6);
@@ -55,9 +64,9 @@
     }
 
     button {
-      margin-top: 50px;
-      padding: 20px 60px;
-      font-size: 28px;
+      margin-top: 40px;
+      padding: 18px 60px;
+      font-size: 26px;
       border-radius: 40px;
       border: none;
       background: linear-gradient(135deg, #ff004c, #ff8800);
@@ -76,6 +85,8 @@
 
 <h1>🎤 BUZZER</h1>
 
+<img id="showImage">
+
 <div class="winner" id="winnerBox">
   <div class="winner-name" id="winnerName"></div>
   <div class="winner-seat" id="winnerSeat"></div>
@@ -85,13 +96,16 @@
 
 <script>
   const firebaseConfig = {
-    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
   };
 
   firebase.initializeApp(firebaseConfig);
+
   const db = firebase.database();
   const buzzerRef = db.ref("buzzer");
+  const settingsRef = db.ref("settings");
 
+  // Gewinner anzeigen
   buzzerRef.on("value", snap => {
     const data = snap.val();
     if (data) {
@@ -99,6 +113,19 @@
       document.getElementById("winnerName").textContent = data.name;
       document.getElementById("winnerSeat").textContent =
         "Platz " + data.seat + " war zuerst";
+    }
+  });
+
+  // Bild / Modus aus Settings
+  settingsRef.on("value", snap => {
+    const s = snap.val();
+    const img = document.getElementById("showImage");
+
+    if (s && s.mode === "image" && s.image) {
+      img.src = s.image;
+      img.style.display = "block";
+    } else {
+      img.style.display = "none";
     }
   });
 
