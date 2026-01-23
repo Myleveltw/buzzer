@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Moderator – Buzzer Show</title>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
@@ -28,6 +27,18 @@
       margin-bottom: 20px;
     }
 
+    #unlockBtn {
+      margin-bottom: 20px;
+      padding: 14px 40px;
+      font-size: 20px;
+      border-radius: 30px;
+      border: none;
+      background: linear-gradient(135deg, #00ffcc, #0066ff);
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
     #showImage {
       max-width: 90%;
       max-height: 45vh;
@@ -45,7 +56,6 @@
       box-shadow: 0 0 60px rgba(0,255,200,0.6);
       text-align: center;
       display: none;
-      animation: pop 0.4s ease-out;
     }
 
     .winner-name {
@@ -58,11 +68,6 @@
       margin-top: 10px;
     }
 
-    @keyframes pop {
-      from { transform: scale(0.7); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
     button {
       margin-top: 40px;
       padding: 18px 60px;
@@ -72,11 +77,6 @@
       background: linear-gradient(135deg, #ff004c, #ff8800);
       color: white;
       cursor: pointer;
-      box-shadow: 0 0 40px rgba(255,80,0,0.6);
-    }
-
-    button:active {
-      transform: scale(0.95);
     }
   </style>
 </head>
@@ -84,6 +84,7 @@
 <body>
 
 <h1>🎤 BUZZER</h1>
+<button id="unlockBtn" onclick="unlockAudio()">🔊 Audio freigeben</button>
 
 <img id="showImage">
 <audio id="showAudio"></audio>
@@ -106,51 +107,65 @@
   const buzzerRef = db.ref("buzzer");
   const settingsRef = db.ref("settings");
 
-  let hasBuzzed = false; // 🔴 entscheidet, ob Bild erlaubt ist
+  let hasBuzzed = false;
+  let audioUnlocked = false;
 
-  // SETTINGS → Bild anzeigen (nur wenn NOCH NICHT gebuzzert)
-settingsRef.on("value", snap => {
-  const s = snap.val();
-  const img = document.getElementById("showImage");
-  const audio = document.getElementById("showAudio");
-
-  // RESET alles
-  img.style.display = "none";
-  audio.pause();
-  audio.currentTime = 0;
-
-  if (hasBuzzed || !s) return;
-
-  // BILD-MODUS
-  if (s.mode === "image" && s.image) {
-    img.src = s.image;
-    img.style.display = "block";
+  function unlockAudio() {
+    const audio = document.getElementById("showAudio");
+    audio.muted = true;
+    audio.play().then(() => {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+      audioUnlocked = true;
+      document.getElementById("unlockBtn").style.display = "none";
+    });
   }
 
-  // AUDIO-MODUS
-  if (s.mode === "audio" && s.audio) {
-    audio.src = s.audio;
-    audio.play();
-  }
-});
-  // BUZZ → Bild sofort weg + Gewinner anzeigen
-buzzerRef.on("value", snap => {
-  const data = snap.val();
-  if (!data) return;
+  // SETTINGS → Modus steuern
+  settingsRef.on("value", snap => {
+    const s = snap.val();
+    const img = document.getElementById("showImage");
+    const audio = document.getElementById("showAudio");
 
-  hasBuzzed = true;
+    // Alles zurücksetzen
+    img.style.display = "none";
+    audio.pause();
+    audio.currentTime = 0;
 
-  document.getElementById("showImage").style.display = "none";
+    if (!s || hasBuzzed) return;
 
-  const audio = document.getElementById("showAudio");
-  audio.pause();
-  audio.currentTime = 0;
+    // 🖼️ BILD-MODUS
+    if (s.mode === "image" && s.image) {
+      img.src = s.image;
+      img.style.display = "block";
+    }
 
-  document.getElementById("winnerBox").style.display = "block";
-  document.getElementById("winnerName").textContent = data.name;
-  document.getElementById("winnerSeat").textContent =
-    "Platz " + data.seat + " war zuerst";
-});
+    // 🎵 AUDIO-MODUS
+    if (s.mode === "audio" && s.audio && audioUnlocked) {
+      audio.src = s.audio;
+      audio.play();
+    }
+  });
+
+  // 🔴 BUZZ
+  buzzerRef.on("value", snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    hasBuzzed = true;
+
+    const audio = document.getElementById("showAudio");
+    audio.pause();
+    audio.currentTime = 0;
+
+    document.getElementById("showImage").style.display = "none";
+
+    document.getElementById("winnerBox").style.display = "block";
+    document.getElementById("winnerName").textContent = data.name;
+    document.getElementById("winnerSeat").textContent =
+      "Platz " + data.seat + " war zuerst";
+  });
 
   function resetBuzzer() {
     hasBuzzed = false;
