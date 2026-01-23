@@ -1,69 +1,99 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Settings</title>
+  <meta charset="UTF-8">
+  <title>Settings – Buzzer Show</title>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<style>
-body{background:#111;color:white;font-family:Arial;padding:20px}
-.box{background:#1c1c1c;padding:20px;border-radius:15px;margin-bottom:20px}
-button,input{width:100%;padding:15px;margin-top:10px;font-size:18px;border-radius:10px;border:none}
-button{background:linear-gradient(135deg,#00ffcc,#0066ff);font-weight:bold}
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: white;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .box {
+      background: #1c1c1c;
+      padding: 20px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 10px;
+      font-size: 18px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .on {
+      background: linear-gradient(135deg, #00ffcc, #0066ff);
+      color: black;
+      font-weight: bold;
+    }
+
+    .off {
+      background: #333;
+      color: white;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>🎛️ SETTINGS</h1>
+<h1>🎛️ SHOW SETTINGS</h1>
 
 <div class="box">
-<h2>Modus</h2>
-<button onclick="setMode('buzzer')">🔴 Nur Buzzer</button>
-<button onclick="setMode('image')">🖼️ Bild + Buzzer</button>
-<button onclick="setMode('audio')">🔊 Audio + Buzzer</button>
+  <h2>Modus</h2>
+  <button onclick="setMode('buzzer')">🔴 Nur Buzzer</button>
+  <button onclick="setMode('image')">🖼️ Buzzer + Bild</button>
 </div>
 
 <div class="box">
-<h2>Bild URL</h2>
-<input id="imgUrl" placeholder="https://bild.jpg">
-<button onclick="setImage()">🖼️ Bild setzen</button>
-</div>
-
-<div class="box">
-<h2>Audio URL</h2>
-<input id="audioUrl" placeholder="https://audio.mp3">
-<button onclick="playAudio()">▶️ Audio starten</button>
+  <h2>Bild (URL)</h2>
+  <input id="imageUrl" placeholder="https://...">
+  <button onclick="setImage()">Bild setzen</button>
 </div>
 
 <script>
-const firebaseConfig={
-databaseURL:"https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app/"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-const settings=db.ref("settings");
+  const firebaseConfig = {
+    databaseURL: "https://wsmds-9a390-default-rtdb.europe-west1.firebasedatabase.app"
+  };
 
-function setMode(mode){
-settings.update({mode});
-}
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const settingsRef = db.ref("settings");
 
-function setImage(){
-settings.update({
-mode:"image",
-image:document.getElementById("imgUrl").value
-});
-}
+  function setMode(mode) {
+    settingsRef.update({ mode });
+  }
 
-function playAudio(){
-settings.update({
-mode:"audio",
-audio:document.getElementById("audioUrl").value,
-play:true
-});
-}
+  function setImage() {
+    const url = document.getElementById("imageUrl").value;
+    if (!url) return;
+    settingsRef.update({ image: url });
+  }
 </script>
 
 </body>
